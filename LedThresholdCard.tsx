@@ -5,17 +5,13 @@ import { useEffect, useState } from "react";
 export default function LedThresholdCard() {
     const [ledStatus, setLedStatus] = useState<number | null>(null);
     const [threshold, setThreshold] = useState<string>("");
-    
-    // 1. Add state to hold the ID of the latest row
-    const [latestId, setLatestId] = useState<number | string | null>(null);
 
     useEffect(() => {
         let mounted = true;
 
         const fetchData = async () => {
             try {
-                // 2. Fetch the id and order by id (or created_at) descending to get the true "latest" row
-                const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${process.env.NEXT_PUBLIC_TABLE_SENSORS}?select=id,light_threshold,led_status&order=id.desc&limit=1`;
+                const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${process.env.NEXT_PUBLIC_TABLE_SENSORS}?select=light_threshold,led_status&limit=1`;
                 const res = await fetch(url, {
                     headers: {
                         "Content-Type": "application/json",
@@ -34,9 +30,6 @@ export default function LedThresholdCard() {
                 const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
 
                 if (!mounted) return;
-                
-                // 3. Store the latest ID so we can target it later
-                if (row?.id) setLatestId(row.id);
                 setLedStatus(row?.led_status ?? null);
                 setThreshold(row?.light_threshold !== undefined && row?.light_threshold !== null
                     ? String(row.light_threshold)
@@ -57,16 +50,9 @@ export default function LedThresholdCard() {
     const handleSetThreshold = async () => {
         const val = parseFloat(threshold);
         if (isNaN(val)) return;
-        
-        // Ensure we have a row ID to target before attempting to update
-        if (!latestId) {
-            console.error("No row ID found to update.");
-            return;
-        }
 
         try {
-            // 4. Append the ?id=eq.{latestId} filter to target only the latest row
-            const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${process.env.NEXT_PUBLIC_TABLE_SENSORS}?id=eq.${latestId}`;
+            const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${process.env.NEXT_PUBLIC_TABLE_SENSORS}`;
             const response = await fetch(url, {
                 method: "PATCH",
                 headers: {
@@ -120,7 +106,7 @@ export default function LedThresholdCard() {
                     />
                     <button
                         onClick={handleSetThreshold}
-                        disabled={!threshold.trim() || isNaN(parseFloat(threshold)) || !latestId}
+                        disabled={!threshold.trim() || isNaN(parseFloat(threshold))}
                         className="bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-600 disabled:cursor-not-allowed
                                    text-white px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap"
                     >
