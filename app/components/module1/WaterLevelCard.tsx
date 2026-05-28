@@ -11,15 +11,44 @@
 //   - Send that threshold to Supabase so the Smart Farm Kit can read it
 // =============================================================================
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
+
+const API_URL = "https://xpyilzprpomzultikekk.supabase.co/rest/v1/mod1_sensor_data?select=id,created_at,water_level_adc,buzzer_status&order=created_at.desc&limit=1";
 
 export default function WaterLevelCard() {
+    const [threshold,    setThreshold]    = useState<number | null>(null);
+    const [waterLevel, setWaterLevel] = useState<number | null>(null);
+    const [buzzerStatus, setBuzzerStatus] = useState<boolean | null>(null);
+    
+function updateThreshold() {
+    console.log("HELLO")
+
+}
+
     useEffect(() => {
         async function fetchData() {
+            // TODO: Fetch the latest water level reading from my Supabase table.
             try {
-                // TODO: Fetch the latest water level reading from your Supabase table.
+                    const res = await fetch(
+                        API_URL,
+                    {
+                        headers: {
+                            apikey: "sb_publishable_R0tmuL3xh3obJQqJ_Yl5Vw_O8dqze3p",
+                            Authorization: `Bearer sb_publishable_R0tmuL3xh3obJQqJ_Yl5Vw_O8dqze3p`,
+                        },
+                    }
+                );
+
+                const data = await res.json();
+
+                if (data && data.length > 0) {
+                    // soil_adc assumed to be percentage already
+                
+                    setWaterLevel(Math.round(data[0].water_level_adc));
+                    setBuzzerStatus(data[0].buzzer_status);
+                }
             } catch (error) {
-                console.error("Failed to fetch water level:", error);
+                console.error("Error fetching water level:", error);
             }
         }
 
@@ -34,7 +63,7 @@ export default function WaterLevelCard() {
             <div>
                 <p className="text-sm text-zinc-400 mb-1">Water Level</p>
                 <p className="text-3xl font-bold">
-                    —
+                    {waterLevel !== null ? waterLevel : "—"}
                     <span className="text-lg text-zinc-400 ml-2">%</span>
                 </p>
             </div>
@@ -43,7 +72,6 @@ export default function WaterLevelCard() {
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium w-fit bg-zinc-700 text-zinc-400">
                 🔊 Buzzer Inactive
             </div>
-
             {/* Threshold control */}
             <div>
                 <label className="text-sm text-zinc-400 block mb-2">Water Level Threshold (%)</label>
@@ -55,13 +83,19 @@ export default function WaterLevelCard() {
                                    focus:outline-none focus:border-blue-500"
                     />
                     <button
+                        onClick={updateThreshold}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg
                                    font-medium transition-colors whitespace-nowrap"
                     >
                         Set
                     </button>
                 </div>
-            </div>
+                {/* Show current threshold */}
+                    <p className="text-xs text-zinc-500 mt-2">
+                Current: {threshold !== null ? `${threshold}%` : "--"}
+                    </p>
+             </div>
+             
         </div>
     );
 }
