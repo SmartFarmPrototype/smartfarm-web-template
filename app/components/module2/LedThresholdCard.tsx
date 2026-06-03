@@ -6,11 +6,14 @@ export default function LedThresholdCard() {
     const [ledStatus, setLedStatus] = useState<number | null>(null);
     const [threshold, setThreshold] = useState<string>("");
     
+    const [mounted, setMounted] = useState(false);
     // 1. Add state to hold the ID of the latest row
     const [latestId, setLatestId] = useState<number | string | null>(null);
 
+
     useEffect(() => {
-        let mounted = true;
+        let mountedFlag = true;
+        setMounted(true);
 
         const fetchData = async () => {
             try {
@@ -33,7 +36,7 @@ export default function LedThresholdCard() {
                 const data = await res.json();
                 const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
 
-                if (!mounted) return;
+                if (!mountedFlag) return;
                 
                 // 3. Store the latest ID so we can target it later
                 if (row?.id) setLatestId(row.id);
@@ -49,7 +52,7 @@ export default function LedThresholdCard() {
         fetchData();
         const interval = setInterval(fetchData, 5000);
         return () => {
-            mounted = false;
+            mountedFlag = false;
             clearInterval(interval);
         };
     }, []);
@@ -97,6 +100,12 @@ export default function LedThresholdCard() {
 
     const ledLabel = ledStatus && Number(ledStatus) > 0 ? "💡 LED on" : "💡 LED off";
 
+    const computedDisabled = Boolean(!threshold.trim() || isNaN(parseFloat(threshold)) || !latestId);
+
+    const isDisabled = mounted ? computedDisabled : true;
+
+    const disabledAttr = isDisabled ? true : undefined;
+
     return (
         <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-5 flex flex-col gap-4">
             <div>
@@ -119,8 +128,12 @@ export default function LedThresholdCard() {
                                    focus:outline-none focus:border-blue-500"
                     />
                     <button
+                        suppressHydrationWarning={true}
+                        data-server-threshold={threshold}
+                        data-server-latestid={String(latestId)}
+                        data-computed-disabled={String(disabledAttr)}
                         onClick={handleSetThreshold}
-                        disabled={!threshold.trim() || isNaN(parseFloat(threshold)) || !latestId}
+                        disabled={Boolean(disabledAttr)}
                         className="bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-600 disabled:cursor-not-allowed
                                    text-white px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap"
                     >
