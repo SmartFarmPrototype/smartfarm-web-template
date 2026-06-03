@@ -9,24 +9,25 @@ export default function TemperatureCard() {
     async function fetchData() {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/mod3_sensor_data?select=temperature&order=created_at.desc&limit=1`,
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}mod3_sensor_data?select=temperature&order=created_at.desc&limit=1`,
           {
             headers: {
               apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
               Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
             },
+            cache: "no-store",
           }
         );
 
+
         const data = await response.json();
+        console.log("FETCH DATA:", data);
 
-        if (!data || data.length === 0) {
-          console.warn("No data returned");
-          return;
+        if (data && data.length > 0) {
+          setTemperature(data[0].temperature);
         }
-
-        setTemperature(data[0].temperature);
       } catch (error) {
+
         console.error("Failed to fetch temperature:", error);
       }
     }

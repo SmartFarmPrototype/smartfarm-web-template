@@ -1,37 +1,49 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
-// =============================================================================
-// MODULE 3 — Humidity Card
-//
-// This card should display the current humidity reading from Supabase.
-// Follow the same pattern used in SoilHumidityCard (module1) as a reference.
-// =============================================================================
-
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function HumidityCard() {
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                // TODO: Fetch the latest humidity reading from your Supabase table.
-            } catch (error) {
-                console.error("Failed to fetch humidity:", error);
-            }
+  const [humidity, setHumidity] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}mod3_sensor_data?select=humidity&order=created_at.desc&limit=1`,
+          {
+            headers: {
+              apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+              Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+            },
+            cache: "no-store", // ✅ IMPORTANT
+          }
+        );
+
+        const data = await response.json();
+        console.log("HUMIDITY DATA:", data);
+
+        if (data && data.length > 0) {
+          setHumidity(data[0].humidity);
         }
+      } catch (error) {
+        console.error("Failed to fetch humidity:", error);
+      }
+    }
 
-        fetchData();
-        const interval = setInterval(fetchData, 5000);
-        return () => clearInterval(interval);
-    }, []);
+    fetchData();
 
-    return (
-        <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-5">
-            <p className="text-sm text-zinc-400 mb-1">Humidity</p>
-            <p className="text-3xl font-bold">
-                —
-                <span className="text-lg text-zinc-400 ml-2">%</span>
-            </p>
-        </div>
-    );
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
+
+  }, []);
+
+  return (
+    <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-5">
+      <p className="text-sm text-zinc-400 mb-1">Humidity</p>
+      <p className="text-3xl font-bold">
+        {humidity ?? "Loading..."}
+        <span className="text-lg text-zinc-400 ml-2">%</span>
+      </p>
+    </div>
+  );
 }
