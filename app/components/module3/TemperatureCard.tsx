@@ -1,16 +1,6 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-// =============================================================================
-// MODULE 3 — Temperature Card
-//
-// This card should display the current temperature reading from Supabase.
-// Follow the same pattern used in SoilHumidityCard (module1) as a reference.
-// =============================================================================
-
 
 import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabaseClient";
 
 export default function TemperatureCard() {
   const [temperature, setTemperature] = useState<number | null>(null);
@@ -18,25 +8,31 @@ export default function TemperatureCard() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const { data, error } = await supabase
-          .from("mod3_sensor_data")
-          .select("temperature")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/mod3_sensor_data?select=temperature&order=created_at.desc&limit=1`,
+          {
+            headers: {
+              apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+              Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+            },
+          }
+        );
 
-        if (error) {
-          console.error("Failed to fetch temperature:", error);
+        const data = await response.json();
+
+        if (!data || data.length === 0) {
+          console.warn("No data returned");
           return;
         }
 
-        setTemperature(data.temperature);
+        setTemperature(data[0].temperature);
       } catch (error) {
         console.error("Failed to fetch temperature:", error);
       }
     }
 
     fetchData();
+
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);

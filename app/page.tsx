@@ -1,11 +1,11 @@
 "use client";
 
 import Navbar from "./components/Navbar";
-// import SoilHumidityCard from "./components/module1/SoilHumidityCard";
-// import WaterLevelCard from "./components/module1/WaterLevelCard";
-// import LightCard from "./components/module2/LightCard";
-// import LedThresholdCard from "./components/module2/LedThresholdCard";
-// import LcdMessageCard from "./components/module2/LcdMessageCard";
+import SoilHumidityCard from "./components/module1/SoilHumidityCard";
+import WaterLevelCard from "./components/module1/WaterLevelCard";
+import LightCard from "./components/module2/LightCard";
+import LedThresholdCard from "./components/module2/LedThresholdCard";
+import LcdMessageCard from "./components/module2/LcdMessageCard";
 import TemperatureCard from "./components/module3/TemperatureCard";
 import HumidityCard from "./components/module3/HumidityCard";
 import FanCard from "./components/module3/FanCard";
@@ -18,7 +18,7 @@ export default function Home() {
 
             <main className="max-w-6xl mx-auto px-6 py-8 space-y-10">
 
-                {/* ── Module 1 ─────────────────────────────────────────────
+                {/* ── Module 1 ───────────────────────────────────────────── */}
                 <section>
                     <div className="mb-4">
                         <h2 className="text-xl font-bold text-white">
@@ -35,7 +35,8 @@ export default function Home() {
                     </div>
                 </section>
 
-                 ── Module 2 ─────────────────────────────────────────────
+                {/* ── Module 2 ───────────────────────────────────────────── */}
+                <section>
                     <div className="mb-4">
                         <h2 className="text-xl font-bold text-white">
                             Light &amp; Display
@@ -50,7 +51,7 @@ export default function Home() {
                         <LedThresholdCard />
                         <LcdMessageCard />
                     </div>
-                </section> */}
+                </section>
 
                 {/* ── Module 3 ───────────────────────────────────────────── */}
                 <section>
