@@ -1,15 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
 
-// LED Threshold Card
 export default function LedThresholdCard() {
     const [ledStatus, setLedStatus] = useState<number | null>(null);
-    const [threshold, setThreshold] = useState<string>("");
-    
-    const [mounted, setMounted] = useState(false);
-    // 1. Add state to hold the ID of the latest row
-    const [latestId, setLatestId] = useState<number | string | null>(null);
 
+    // 1. Split state: one for the live DB value, one for the user's input
+    const [currentThreshold, setCurrentThreshold] = useState<string>("");
+    const [inputValue, setInputValue] = useState<string>("");
+
+    const [mounted, setMounted] = useState(false);
+    const [latestId, setLatestId] = useState<number | string | null>(null);
 
     useEffect(() => {
         let mountedFlag = true;
@@ -17,8 +17,7 @@ export default function LedThresholdCard() {
 
         const fetchData = async () => {
             try {
-                // 2. Fetch the id and order by id (or created_at) descending to get the true "latest" row
-                const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${process.env.NEXT_PUBLIC_TABLE_SENSORS}?select=id,light_threshold,led_status&order=id.desc&limit=1`;
+                const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${process.env.NEXT_PUBLIC_TABLE_SETTINGS}?select=id,light_threshold&order=id.desc&limit=1`;
                 const res = await fetch(url, {
                     headers: {
                         "Content-Type": "application/json",
@@ -37,15 +36,39 @@ export default function LedThresholdCard() {
                 const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
 
                 if (!mountedFlag) return;
-                
-                // 3. Store the latest ID so we can target it later
+
                 if (row?.id) setLatestId(row.id);
-                setLedStatus(row?.led_status ?? null);
-                setThreshold(row?.light_threshold !== undefined && row?.light_threshold !== null
-                    ? String(row.light_threshold)
-                    : "");
+                // setLedStatus(row?.led_status ?? null);
+
+                // 2. Only update the 'currentThreshold', leaving user input alone
+                setCurrentThreshold(
+                    row?.light_threshold !== undefined && row?.light_threshold !== null
+                        ? String(row.light_threshold)
+                        : ""
+                );
             } catch (err) {
                 console.error("Error fetching LED status / threshold:", err);
+            }
+            try {
+                const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${process.env.NEXT_PUBLIC_TABLE_SENSORS}?select=led_status&order=id.desc&limit=1`;
+                const res = await fetch(url, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                        Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+                    },
+                });
+                if (!res.ok) {
+                    const body = await res.text().catch(() => "");
+                    console.error("Failed to fetch sensor data:", res.status, body);
+                    return;
+                }
+                const sensorData = await res.json();
+                const ledStatus = Array.isArray(sensorData) && sensorData.length > 0 ? sensorData[0]?.led_status : null;
+                if (!mountedFlag) return;
+                setLedStatus(ledStatus);
+            } catch (err) {
+                console.error("Error fetching LED status:", err);
             }
         };
 
@@ -58,20 +81,21 @@ export default function LedThresholdCard() {
     }, []);
 
     const handleSetThreshold = async () => {
-        const val = parseFloat(threshold);
+        const val = parseFloat(inputValue);
         if (isNaN(val)) return;
-        
-        // Ensure we have a row ID to target before attempting to update
+
         if (!latestId) {
             console.error("No row ID found to update.");
             return;
         }
 
+        // Optimistically update UI so it feels snappy
+        setCurrentThreshold(String(val));
+
         try {
-            // 4. Append the ?id=eq.{latestId} filter to target only the latest row
             const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${process.env.NEXT_PUBLIC_TABLE_SETTINGS}?id=eq.${latestId}`;
             const response = await fetch(url, {
-                method: "POST",
+                method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                     apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -86,13 +110,8 @@ export default function LedThresholdCard() {
                 throw new Error(`Error ${response.status}: ${errorData?.message ?? "unknown"}`);
             }
 
-            const ct = response.headers.get("content-type") || "";
-            const data = (response.status !== 204 && ct.includes("application/json"))
-                ? await response.json()
-                : null;
-
-            console.log("Threshold sent:", data ?? "no JSON returned");
-            setThreshold("");
+            // 3. Clear the input field after successful submission
+            setInputValue("");
         } catch (error) {
             console.error("Failed to set threshold:", error);
         }
@@ -100,10 +119,9 @@ export default function LedThresholdCard() {
 
     const ledLabel = ledStatus && Number(ledStatus) > 0 ? "💡 LED on" : "💡 LED off";
 
-    const computedDisabled = Boolean(!threshold.trim() || isNaN(parseFloat(threshold)) || !latestId);
-
+    // 4. Update validation to look at 'inputValue' instead of 'threshold'
+    const computedDisabled = Boolean(!inputValue.trim() || isNaN(parseFloat(inputValue)) || !latestId);
     const isDisabled = mounted ? computedDisabled : true;
-
     const disabledAttr = isDisabled ? true : undefined;
 
     return (
@@ -119,17 +137,18 @@ export default function LedThresholdCard() {
                 <label className="text-sm text-zinc-400 block mb-2">Light Threshold (lx)</label>
                 <div className="flex gap-2">
                     <input
+                        suppressHydrationWarning={true}
                         type="number"
                         step="0.1"
                         placeholder="e.g. 200.0"
-                        value={threshold}
-                        onChange={(e) => setThreshold(e.target.value)}
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
                         className="bg-zinc-700 border border-zinc-600 text-white rounded-lg px-3 py-2 w-full
                                    focus:outline-none focus:border-blue-500"
                     />
                     <button
                         suppressHydrationWarning={true}
-                        data-server-threshold={threshold}
+                        data-server-threshold={inputValue}
                         data-server-latestid={String(latestId)}
                         data-computed-disabled={String(disabledAttr)}
                         onClick={handleSetThreshold}
@@ -140,7 +159,7 @@ export default function LedThresholdCard() {
                         Set
                     </button>
                 </div>
-                <p className="text-xs text-zinc-500 mt-2">Current: {threshold || "—"}</p>
+                <p className="text-xs text-zinc-500 mt-2">Current: {currentThreshold || "—"}</p>
             </div>
         </div>
     );

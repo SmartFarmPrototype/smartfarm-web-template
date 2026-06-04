@@ -22,7 +22,7 @@ export default function LcdMessageCard() {
         const fetchData = async () => {
             try {
                 // Fetch just the id, ordered descending, limit 1
-                const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${process.env.NEXT_PUBLIC_TABLE_SENSORS}?select=id&order=id.desc&limit=1`;
+                const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${process.env.NEXT_PUBLIC_TABLE_SETTINGS}?select=id&order=id.desc&limit=1`;
                 const res = await fetch(url, {
                     headers: {
                         "Content-Type": "application/json",
@@ -69,7 +69,7 @@ export default function LcdMessageCard() {
             // Append the ID filter to target the latest row
             const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${process.env.NEXT_PUBLIC_TABLE_SETTINGS}?id=eq.${latestId}`;
             const response = await fetch(url, {
-                method: "POST",
+                method: "PATCH", // Changed from POST to PATCH
                 headers: {
                     "Content-Type": "application/json",
                     apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
