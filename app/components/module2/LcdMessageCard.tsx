@@ -67,9 +67,9 @@ export default function LcdMessageCard() {
 
         try {
             // Append the ID filter to target the latest row
-            const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${process.env.NEXT_PUBLIC_TABLE_SENSORS}?id=eq.${latestId}`;
+            const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${process.env.NEXT_PUBLIC_TABLE_SETTINGS}?id=eq.${latestId}`;
             const response = await fetch(url, {
-                method: "PATCH", // Changed from POST to PATCH
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

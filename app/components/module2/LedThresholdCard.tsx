@@ -69,9 +69,9 @@ export default function LedThresholdCard() {
 
         try {
             // 4. Append the ?id=eq.{latestId} filter to target only the latest row
-            const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${process.env.NEXT_PUBLIC_TABLE_SENSORS}?id=eq.${latestId}`;
+            const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${process.env.NEXT_PUBLIC_TABLE_SETTINGS}?id=eq.${latestId}`;
             const response = await fetch(url, {
-                method: "PATCH",
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
