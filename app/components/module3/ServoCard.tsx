@@ -38,33 +38,34 @@ export default function ServoCard() {
   }, []);
 
   // ✅ Send command to Supabase (Open/Close)
+
 async function setDoor(open: boolean) {
   setLoading(true);
 
   try {
     await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}device_control?id=eq.1`,
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}mod3_sensor_data?id=eq.1`,
       {
         method: "PATCH",
         headers: {
           apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
           Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
           "Content-Type": "application/json",
+          Prefer: "return=representation",
         },
         body: JSON.stringify({
-          servo_mode: open ? "manual_open" : "manual_close",
-          updated_at: new Date().toISOString(),
+          servo: open,
         }),
       }
     );
-      // Update UI immediately
-    setServoOpen(open);
+
   } catch (error) {
     console.error("Failed to send servo command:", error);
   } finally {
     setLoading(false);
   }
 }
+
 
 
 

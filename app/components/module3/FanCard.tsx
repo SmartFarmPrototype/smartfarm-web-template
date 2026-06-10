@@ -92,7 +92,7 @@ export default function FanCard() {
       const newState = !fanOn;
 
       await fetch(baseUrl, {
-        method: "POST",
+        method: "PATCH",
         headers,
         body: JSON.stringify({
           fan: newState,
