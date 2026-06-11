@@ -13,18 +13,41 @@
 
 import { useState, useEffect } from "react";
 
-const API_URL = "https://xpyilzprpomzultikekk.supabase.co/rest/v1/mod1_sensor_data?select=id,created_at,water_level_adc,buzzer_status&order=created_at.desc&limit=1";
+const API_URL = "https://xpyilzprpomzultikekk.supabase.co/rest/v1/mod1_sensor_data?select=id,created_at,water_level_adc,buzzer_status&id=eq.1";
 
 export default function WaterLevelCard() {
     const [threshold,    setThreshold]    = useState<number | null>(null);
     const [waterLevel, setWaterLevel] = useState<number | null>(null);
     const [buzzerStatus, setBuzzerStatus] = useState<boolean | null>(null);
     
-function updateThreshold() {
-    console.log("HELLO")
+    async function updateThreshold() {
+    try {
+    const res = await fetch(
+        "https://xpyilzprpomzultikekk.supabase.co/rest/v1/mod1_sensor_data?id=eq.1",
+        {
+            method: "PATCH",
+            headers: {
+                apikey: "sb_publishable_R0tmuL3xh3obJQqJ_Yl5Vw_O8dqze3p",
+                Authorization: `Bearer sb_publishable_R0tmuL3xh3obJQqJ_Yl5Vw_O8dqze3p`,
+                "Content-Type": "application/json",
+                Prefer: "return=minimal",
+            },
+            body: JSON.stringify({
+                water_threshold: threshold, // your threshold value
+            }),
+        }
+    );
 
+    if (!res.ok) {
+        throw new Error(`Failed to update threshold: ${res.status}`);
+    }
+
+    console.log("Threshold updated successfully");
+} catch (error) {
+    console.error("Error updating threshold:", error);
 }
-
+}
+// ---------- READ
     useEffect(() => {
         async function fetchData() {
             // TODO: Fetch the latest water level reading from my Supabase table.
@@ -81,6 +104,7 @@ function updateThreshold() {
                         placeholder="e.g. 30"
                         className="bg-zinc-700 border border-zinc-600 text-white rounded-lg px-3 py-2 w-full
                                    focus:outline-none focus:border-blue-500"
+                                   onChange={(element)=>setThreshold(Number(element.target.value))}
                     />
                     <button
                         onClick={updateThreshold}

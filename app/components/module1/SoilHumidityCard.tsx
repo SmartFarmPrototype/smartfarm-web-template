@@ -9,7 +9,7 @@
 
 import { useState, useEffect } from "react";
 
-const API_URL = "https://xpyilzprpomzultikekk.supabase.co/rest/v1/mod1_sensor_data?select=id,created_at,soil_adc&order=created_at.desc&limit=1";
+const API_URL = "https://xpyilzprpomzultikekk.supabase.co/rest/v1/mod1_sensor_data?select=id,created_at,soil_adc&id=eq.1";
 
 export default function SoilHumidityCard() {
     const [value, setValue] = useState<number | null>(null);
