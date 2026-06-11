@@ -70,7 +70,7 @@ function updateThreshold() {
 
             {/* Buzzer status */}
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium w-fit bg-zinc-700 text-zinc-400">
-                🔊 Buzzer Inactive
+                 {buzzerStatus ? "On" : "Off"}
             </div>
             {/* Threshold control */}
             <div>
