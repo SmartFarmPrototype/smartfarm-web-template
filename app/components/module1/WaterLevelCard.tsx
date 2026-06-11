@@ -1,6 +1,5 @@
 "use client";
 /* eslint-disable @typescript-eslint/no-unused-vars */
-
 // =============================================================================
 // MODULE 1 — Water Level Card
 //
