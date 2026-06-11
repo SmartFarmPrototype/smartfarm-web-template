@@ -11,7 +11,7 @@ export default function ServoCard() {
     async function fetchData() {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SUPABASE_URL}mod3_sensor_data?select=servo&order=created_at.desc&limit=1`,
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/mod3_sensor_data?select=servo&id=eq.1`,
           {
             headers: {
               apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -44,7 +44,7 @@ async function setDoor(open: boolean) {
 
   try {
     await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}mod3_sensor_data?id=eq.1`,
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/mod3_sensor_data?select=servo&id=eq.1`,
       {
         method: "PATCH",
         headers: {

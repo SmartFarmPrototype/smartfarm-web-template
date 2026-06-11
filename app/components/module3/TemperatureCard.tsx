@@ -1,50 +1,40 @@
 "use client";
-
 import { useEffect, useState } from "react";
 
 export default function TemperatureCard() {
-  const [temperature, setTemperature] = useState<number | null>(null);
+  const [temp, setTemp] = useState<number | null>(null);
+
+  const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/mod3_sensor_data?select=temperature&id=eq.1`;
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SUPABASE_URL}mod3_sensor_data?select=temperature&order=created_at.desc&limit=1`,
-          {
-            headers: {
-              apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-              Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
-            },
-            cache: "no-store",
-          }
-        );
+        const res = await fetch(url, {
+          headers: {
+            apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+          },
+          cache: "no-store",
+        });
 
+        const data = await res.json();
+        if (data.length > 0) setTemp(data[0].temperature);
 
-        const data = await response.json();
-        console.log("FETCH DATA:", data);
-
-        if (data && data.length > 0) {
-          setTemperature(data[0].temperature);
-        }
       } catch (error) {
-
-        console.error("Failed to fetch temperature:", error);
+        console.error(error);
       }
     }
 
     fetchData();
+    const i = setInterval(fetchData, 5000);
+    return () => clearInterval(i);
 
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-5">
-      <p className="text-sm text-zinc-400 mb-1">Temperature</p>
-      <p className="text-3xl font-bold">
-        {temperature ?? "—"}
-        <span className="text-lg text-zinc-400 ml-2">°C</span>
-      </p>
+    <div className="bg-zinc-800 p-5 rounded-xl">
+      <p>Temperature</p>
+      <p className="text-2xl">{temp ?? "..."} °C</p>
     </div>
   );
 }

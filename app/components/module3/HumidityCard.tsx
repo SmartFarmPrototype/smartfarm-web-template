@@ -9,7 +9,7 @@ export default function HumidityCard() {
     async function fetchData() {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SUPABASE_URL}mod3_sensor_data?select=humidity&order=created_at.desc&limit=1`,
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/mod3_sensor_data?select=humidity&id=eq.1`,
           {
             headers: {
               apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
