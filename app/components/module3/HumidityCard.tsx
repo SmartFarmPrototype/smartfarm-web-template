@@ -22,9 +22,12 @@ export default function HumidityCard() {
         const data = await response.json();
         console.log("HUMIDITY DATA:", data);
 
-        if (data && data.length > 0) {
-          setHumidity(data[0].humidity);
-        }
+    if (Array.isArray(data) && data.length > 0 && data[0]) {
+      setHumidity(data[0].humidity ?? null);
+    } else {
+      console.log("No humidity data found:", data);
+    }
+
       } catch (error) {
         console.error("Failed to fetch humidity:", error);
       }

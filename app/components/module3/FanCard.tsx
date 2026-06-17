@@ -1,18 +1,14 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { useEffect, useState } from "react";
 
 export default function FanCard() {
-
   const [fanOn, setFanOn] = useState(false);
-  const [threshold, setThreshold] = useState(25);
+  const [current_threshold, setThreshold] = useState(25);
   const [loading, setLoading] = useState(false);
 
-  // ✅ CHANGE: FIXED URL (added /rest/v1/)
   const baseUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/mod3_sensor_data`;
 
-  // ✅ CHANGE: added Prefer header (important for PATCH)
   const headers = {
     apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
@@ -20,52 +16,26 @@ export default function FanCard() {
     Prefer: "return=representation",
   };
 
-  // ✅ CHANGE: force fan OFF at startup (still POST = insert if needed)
+  // ✅ Fetch latest fan + threshold state — same pattern as the working
+  // ServoCard: fetch immediately on mount, then poll every 5s. Filters
+  // by id=eq.1 (instead of order/limit) so it always reads the exact
+  // row the toggle button writes to.
   useEffect(() => {
-    async function initFan() {
-      try {
-        await fetch(`${baseUrl}`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            id: 1,              // ✅ IMPORTANT: ensure row exists
-            fan: false,
-            fan_speed: 0.2,
-          }),
-        });
-      } catch (err) {
-        console.error("Init error:", err);
-      }
-    }
-
-    initFan();
-  }, []);
-
-  // ✅ CHANGE: fetch latest data (FIXED & instead of &amp;)
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-
     async function fetchData() {
       try {
-        const res = await fetch(
-          `${baseUrl}?select=*&order=id.asc&limit=1`, // ✅ FIXED URL
-          {
-            headers,
-            cache: "no-store",
-          }
-        );
+        const res = await fetch(`${baseUrl}?select=fan,current_threshold&id=eq.1`, {
+          headers,
+          cache: "no-store",
+        });
 
         const data = await res.json();
 
         if (data.length > 0) {
           const row = data[0];
-
-          // ✅ set fan state
           setFanOn(row.fan ?? false);
 
-          // ✅ load threshold
-          if (row.threshold !== undefined && row.threshold !== null) {
-            setThreshold(row.threshold);
+          if (row.current_threshold !== undefined && row.current_threshold !== null) {
+            setThreshold(row.current_threshold);
           }
         }
       } catch (error) {
@@ -73,33 +43,27 @@ export default function FanCard() {
       }
     }
 
-    const timeout = setTimeout(() => {
-      fetchData();
-      interval = setInterval(fetchData, 5000);
-    }, 6000);
-
-    return () => {
-      clearTimeout(timeout);
-      if (interval) clearInterval(interval);
-    };
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
-
-  // ✅ CHANGE: PATCH instead of POST + row filter (?id=eq.1)
+  // ✅ Manual toggle — PATCH the existing row, only update local UI once
+  // Supabase actually confirms the write
   async function toggleFan() {
     setLoading(true);
+    const newState = !fanOn;
 
     try {
-      const newState = !fanOn;
-
-      await fetch(`${baseUrl}?id=eq.1`, {   // ✅ IMPORTANT
+      const res = await fetch(`${baseUrl}?id=eq.1`, {
         method: "PATCH",
         headers,
         body: JSON.stringify({
           fan: newState,
-          fan_speed: 0.2,
         }),
       });
+
+      if (!res.ok) throw new Error(`PATCH failed: ${res.status}`);
 
       setFanOn(newState);
     } catch (err) {
@@ -109,24 +73,24 @@ export default function FanCard() {
     }
   }
 
-
-  // ✅ CHANGE: PATCH instead of POST + filter
+  // ✅ Update auto threshold
   async function setAutoThreshold() {
     try {
-      await fetch(`${baseUrl}?id=eq.1`, {   // ✅ IMPORTANT
+      const res = await fetch(`${baseUrl}?id=eq.1`, {
         method: "PATCH",
         headers,
         body: JSON.stringify({
-          threshold: threshold,
+          current_threshold: current_threshold,
         }),
       });
 
-      console.log("Threshold updated:", threshold);
+      if (!res.ok) throw new Error(`PATCH failed: ${res.status}`);
+
+      console.log("Threshold updated:", current_threshold);
     } catch (err) {
       console.error("Failed to set threshold:", err);
     }
   }
-
 
   return (
     <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-5 flex flex-col gap-4">
@@ -170,7 +134,7 @@ export default function FanCard() {
         <div className="flex gap-2">
           <input
             type="number"
-            value={threshold}
+            value={current_threshold}
             onChange={(e) => setThreshold(Number(e.target.value))}
             className="bg-zinc-700 border border-zinc-600 text-white rounded-lg px-3 py-2 w-full
                        focus:outline-none focus:border-blue-500"
