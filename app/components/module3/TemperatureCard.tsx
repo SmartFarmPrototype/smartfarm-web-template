@@ -1,37 +1,40 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-// =============================================================================
-// MODULE 3 — Temperature Card
-//
-// This card should display the current temperature reading from Supabase.
-// Follow the same pattern used in SoilHumidityCard (module1) as a reference.
-// =============================================================================
-
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function TemperatureCard() {
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                // TODO: Fetch the latest temperature reading from your Supabase table.
-            } catch (error) {
-                console.error("Failed to fetch temperature:", error);
-            }
-        }
+  const [temp, setTemp] = useState<number | null>(null);
 
-        fetchData();
-        const interval = setInterval(fetchData, 5000);
-        return () => clearInterval(interval);
-    }, []);
+  const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/mod3_sensor_data?select=temperature&id=eq.1`;
 
-    return (
-        <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-5">
-            <p className="text-sm text-zinc-400 mb-1">Temperature</p>
-            <p className="text-3xl font-bold">
-                —
-                <span className="text-lg text-zinc-400 ml-2">°C</span>
-            </p>
-        </div>
-    );
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch(url, {
+          headers: {
+            apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+          },
+          cache: "no-store",
+        });
+
+        const data = await res.json();
+        if (data.length > 0) setTemp(data[0].temperature);
+
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    fetchData();
+    const i = setInterval(fetchData, 5000);
+    return () => clearInterval(i);
+
+  }, []);
+
+  return (
+    <div className="bg-zinc-800 p-5 rounded-xl">
+      <p>Temperature</p>
+      <p className="text-2xl">{temp ?? "..."} °C</p>
+    </div>
+  );
 }
